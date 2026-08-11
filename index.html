@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل VPS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 40px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { font-size: 1.1em; opacity: 0.9; }
+        .main-content { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; }
+        @media (max-width: 1024px) { .main-content { grid-template-columns: 1fr; } }
+        .create-form { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+        .create-form h2 { color: #333; margin-bottom: 20px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { color: #555; margin-bottom: 8px; font-weight: 600; }
+        .form-group input { padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; }
+        .form-group input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .btn-create { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .btn-create:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3); }
+        .servers-list { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+        .servers-list h2 { color: #333; margin-bottom: 20px; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+        .servers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .server-card { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 12px; padding: 20px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); transition: all 0.3s; }
+        .server-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid rgba(0, 0, 0, 0.1); }
+        .card-header h3 { color: #333; }
+        .badge { background: #4caf50; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; }
+        .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .spec-item { display: flex; gap: 8px; background: white; padding: 10px; border-radius: 8px; }
+        .spec-item span { font-size: 1.5em; }
+        .spec-item p { color: #555; font-size: 0.9em; }
+        .usage-stats { margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; }
+        .stat { margin-bottom: 12px; }
+        .stat label { display: block; color: #666; font-size: 0.85em; margin-bottom: 5px; font-weight: 600; }
+        .progress-bar { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-bottom: 5px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+        .stat span { display: block; text-align: right; color: #667eea; font-size: 0.9em; font-weight: 600; }
+        .card-footer { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-link, .btn-delete, .btn-view { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 0.9em; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-link { background: #667eea; color: white; }
+        .btn-link:hover { background: #5568d3; transform: translateY(-2px); }
+        .btn-view { background: #2196F3; color: white; }
+        .btn-view:hover { background: #0b7dda; transform: translateY(-2px); }
+        .btn-delete { background: #ff6b6b; color: white; }
+        .btn-delete:hover { background: #ee5a52; transform: translateY(-2px); }
+        .page { display: none; }
+        .page.active { display: block; }
+        .details-page { max-width: 1000px; margin: 0 auto; padding: 30px 20px; }
+        .btn-back { background: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 1em; cursor: pointer; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
+        .btn-back:hover { transform: translateX(-5px); }
+        .details-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+        .details-header { text-align: center; margin-bottom: 40px; padding-bottom: 30px; border-bottom: 2px solid #e0e0e0; }
+        .details-header h1 { color: #667eea; margin-bottom: 10px; }
+        .details-header h2 { color: #333; font-size: 1.8em; }
+        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; }
+        @media (max-width: 768px) { .details-grid { grid-template-columns: 1fr; } }
+        .detail-card { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 25px; border-radius: 12px; }
+        .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.1); }
+        .detail-row label { color: #666; font-weight: 600; }
+        .detail-row strong { color: #333; font-size: 1.1em; }
+        .detail-row strong.warning { color: #ff6b6b; }
+        .detail-row strong.success { color: #4caf50; }
+        .usage-section { margin-top: 40px; }
+        .usage-section h3 { color: #333; margin-bottom: 25px; }
+        .usage-item { margin-bottom: 30px; }
+        .usage-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .usage-header label { color: #666; font-weight: 600; }
+        .usage-header span { color: #667eea; font-weight: 600; font-size: 1.1em; }
+        .error-page { text-align: center; color: white; padding: 40px; }
+        @media (max-width: 768px) { .main-content { grid-template-columns: 1fr; } .form-row { grid-template-columns: 1fr; } .servers-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div id="mainPage" class="page active">
+        <div class="container">
+            <header class="header">
+                <h1>🖥️ پنل مدیریت سرورهای VPS</h1>
+                <p>ایجاد و مدیریت سرورهای مجازی با سهولت</p>
+            </header>
+            <div class="main-content">
+                <div class="create-form">
+                    <h2>➕ ایجاد سرور جدید</h2>
+                    <form id="createServerForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>💻 CPU (هسته)</label>
+                                <input type="number" id="cpu" min="1" max="32" value="2" required>
+                            </div>
+                            <div class="form-group">
+                                <label>🧠 RAM (GB)</label>
+                                <input type="number" id="ram" min="1" max="256" value="4" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>💾 Storage (GB)</label>
+                                <input type="number" id="storage" min="10" max="2000" value="50" required>
+                            </div>
+                            <div class="form-group">
+                                <label>⏱️ مدت زمان (روز)</label>
+                                <input type="number" id="duration" min="1" max="365" value="30" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-create">ایجاد سرور</button>
+                    </form>
+                </div>
+                <div class="servers-list">
+                    <h2>📊 سرورهای فعال (<span id="serverCount">0</span>)</h2>
+                    <div id="serversList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailsPage" class="page">
+        <div class="container">
+            <button class="btn-back" onclick="goToMain()">← بازگشت</button>
+            <div class="details-page">
+                <div class="details-container">
+                    <div class="details-header">
+                        <h1>📋 اطلاعات سرور</h1>
+                        <h2 id="serverName"></h2>
+                    </div>
+                    <div class="details-grid">
+                        <div class="detail-card">
+                            <div class="detail-row">
+                                <label>💻 CPU</label>
+                                <strong id="detailCpu"></strong>
+                            </div>
+                            <div class="detail-row">
+                                <label>🧠 RAM</label>
+                                <strong id="detailRam"></strong>
+                            </div>
+                            <div class="detail-row">
+                                <label>💾 Storage</label>
+                                <strong id="detailStorage"></strong>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-row">
+                                <label>📅 تاریخ ایجاد</label>
+                                <strong id="detailCreated"></strong>
+                            </div>
+                            <div class="detail-row">
+                                <label>⏰ تاریخ انقضا</label>
+                                <strong id="detailExpires"></strong>
+                            </div>
+                            <div class="detail-row">
+                                <label>⏳ روزهای باقی</label>
+                                <strong id="detailDaysLeft"></strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="usage-section">
+                        <h3>📊 استفاده از منابع</h3>
+                        <div class="usage-item">
+                            <div class="usage-header">
+                                <label>💻 استفاده CPU</label>
+                                <span id="cpuPercent"></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="cpuBar"></div>
+                            </div>
+                        </div>
+                        <div class="usage-item">
+                            <div class="usage-header">
+                                <label>🧠 استفاده RAM</label>
+                                <span id="ramPercent"></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="ramBar"></div>
+                            </div>
+                        </div>
+                        <div class="usage-item">
+                            <div class="usage-header">
+                                <label>💾 استفاده Storage</label>
+                                <span id="storagePercent"></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="storageBar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadServers() {
+            const servers = JSON.parse(localStorage.getItem('servers') || '[]');
+            const list = document.getElementById('serversList');
+            document.getElementById('serverCount').textContent = servers.length;
+
+            if (servers.length === 0) {
+                list.innerHTML = '<div class="empty-state"><p>هیچ سروری ایجاد نشده است</p><p class="hint">برای شروع، یک سرور جدید بسازید</p></div>';
+                return;
+            }
+
+            list.innerHTML = '<div class="servers-grid">' + servers.map(server => `
+                <div class="server-card">
+                    <div class="card-header">
+                        <h3>${server.serverId}</h3>
+                        <span class="badge">فعال</span>
+                    </div>
+                    <div class="specs">
+                        <div class="spec-item"><span>💻</span><p><strong>${server.cpu}</strong> هسته</p></div>
+                        <div class="spec-item"><span>🧠</span><p><strong>${server.ram}</strong> GB</p></div>
+                        <div class="spec-item"><span>💾</span><p><strong>${server.storage}</strong> GB</p></div>
+                        <div class="spec-item"><span>⏱️</span><p><strong>${server.duration}</strong> روز</p></div>
+                    </div>
+                    <div class="usage-stats">
+                        <div class="stat">
+                            <label>استفاده CPU</label>
+                            <div class="progress-bar"><div class="progress-fill" style="width: ${server.cpuUsage}%"></div></div>
+                            <span>${server.cpuUsage.toFixed(1)}%</span>
+                        </div>
+                        <div class="stat">
+                            <label>استفاده RAM</label>
+                            <div class="progress-bar"><div class="progress-fill" style="width: ${server.ramUsage}%"></div></div>
+                            <span>${server.ramUsage.toFixed(1)}%</span>
+                        </div>
+                        <div class="stat">
+                            <label>استفاده Storage</label>
+                            <div class="progress-bar"><div class="progress-fill" style="width: ${server.storageUsage}%"></div></div>
+                            <span>${server.storageUsage.toFixed(1)}%</span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn-link" onclick="copyLink('${server.id}')">🔗 کپی لینک</button>
+                        <button class="btn-view" onclick="viewDetails('${server.id}')">👁️ مشاهده</button>
+                        <button class="btn-delete" onclick="deleteServer('${server.id}')">🗑️ حذف</button>
+                    </div>
+                </div>
+            `).join('') + '</div>';
+        }
+
+        function createServer(e) {
+            e.preventDefault();
+            const cpu = parseInt(document.getElementById('cpu').value);
+            const ram = parseInt(document.getElementById('ram').value);
+            const storage = parseInt(document.getElementById('storage').value);
+            const duration = parseInt(document.getElementById('duration').value);
+
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + duration);
+
+            const server = {
+                id: Math.random().toString(36).substring(7),
+                serverId: 'VPS-' + Math.random().toString(36).substring(7).toUpperCase(),
+                cpu, ram, storage, duration,
+                createdAt: new Date().toLocaleString('fa-IR'),
+                expiresAt: expiresAt.toLocaleString('fa-IR'),
+                cpuUsage: Math.random() * 100,
+                ramUsage: Math.random() * 100,
+                storageUsage: Math.random() * 100
+            };
+
+            const servers = JSON.parse(localStorage.getItem('servers') || '[]');
+            servers.push(server);
+            localStorage.setItem('servers', JSON.stringify(servers));
+
+            document.getElementById('createServerForm').reset();
+            loadServers();
+        }
+
+        function deleteServer(id) {
+            if (confirm('آیا مطمئن هستید؟')) {
+                let servers = JSON.parse(localStorage.getItem('servers') || '[]');
+                servers = servers.filter(s => s.id !== id);
+                localStorage.setItem('servers', JSON.stringify(servers));
+                loadServers();
+            }
+        }
+
+        function copyLink(id) {
+            const link = `${window.location.origin}${window.location.pathname}?view=${id}`;
+            navigator.clipboard.writeText(link);
+            alert('لینک کپی شد! ✓');
+        }
+
+        function viewDetails(id) {
+            const servers = JSON.parse(localStorage.getItem('servers') || '[]');
+            const server = servers.find(s => s.id === id);
+            if (!server) return;
+
+            document.getElementById('serverName').textContent = server.serverId;
+            document.getElementById('detailCpu').textContent = server.cpu + ' هسته';
+            document.getElementById('detailRam').textContent = server.ram + ' GB';
+            document.getElementById('detailStorage').textContent = server.storage + ' GB';
+            document.getElementById('detailCreated').textContent = server.createdAt;
+            document.getElementById('detailExpires').textContent = server.expiresAt;
+
+            const daysLeft = Math.ceil((new Date(server.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+            const daysElement = document.getElementById('detailDaysLeft');
+            daysElement.textContent = daysLeft > 0 ? daysLeft + ' روز' : 'منقضی شده';
+            daysElement.className = daysLeft < 7 ? 'warning' : 'success';
+
+            document.getElementById('cpuPercent').textContent = server.cpuUsage.toFixed(1) + '%';
+            document.getElementById('ramPercent').textContent = server.ramUsage.toFixed(1) + '%';
+            document.getElementById('storagePercent').textContent = server.storageUsage.toFixed(1) + '%';
+
+            document.getElementById('cpuBar').style.width = server.cpuUsage + '%';
+            document.getElementById('ramBar').style.width = server.ramUsage + '%';
+            document.getElementById('storageBar').style.width = server.storageUsage + '%';
+
+            document.getElementById('mainPage').classList.remove('active');
+            document.getElementById('detailsPage').classList.add('active');
+        }
+
+        function goToMain() {
+            document.getElementById('detailsPage').classList.remove('active');
+            document.getElementById('mainPage').classList.add('active');
+        }
+
+        document.getElementById('createServerForm').addEventListener('submit', createServer);
+        loadServers();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('view')) {
+            const id = urlParams.get('view');
+            viewDetails(id);
+        }
+    </script>
+</body>
+</html>
